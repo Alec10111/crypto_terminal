@@ -11,6 +11,8 @@ from rest_framework.response import Response
 from .models import Coin, CoinHistory
 from .serializers import CoinSerializer, GroupSerializer, UserSerializer, CoinHistorySerializer
 from django.db.models import Max
+from rest_framework import status
+from .utils import maxProfit
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -32,6 +34,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 
 @api_view(['GET'])
+# Returns a list of available endpoints
 def getRoutes(request):
     routes = [
         {
@@ -78,11 +81,13 @@ def getRoutes(request):
 
 
 class GetCoinView(APIView):
+    # Returns a list of available coins
     def get(self, request):
         coins = Coin.objects.all()
         serializer = CoinSerializer(coins, many=True)
         return Response(serializer.data)
 
+    # Creates a new coin on the coin table
     def post(self, request):
         data = request.data
         coin = Coin.objects.create(
@@ -90,6 +95,7 @@ class GetCoinView(APIView):
             symbol=data.symbol
         )
 
+    # Updates a coin in the table (not sure why)
     def put(self, request):
         data = request.data
         coin = Coin.objects.get(name=data.name)
@@ -98,21 +104,21 @@ class GetCoinView(APIView):
             serializer.save()
             return Response(serializer.data)
         else:
-            return Response("Invalid")
+            return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
 
 class GetCoinInfoView(APIView):
+    # Idea: Return last record available for that coin
     def get(self, request, pk):
         print(request.data)
         symbol = Coin.objects.get(symbol=pk)
         print(symbol)
         # registry = CoinHistory.objects.filter(symbol=symbol)
         # regSerializer = CoinHistorySerializer(registry, many=True)
-        return Response("Pending implementation")
+        return Response('To do')
 
+    # Returns single record for the date, or the interval
     def post(self, request, pk):
-        print(request.data.keys())
-
         if 'date' in request.data.keys():
             symbol = Coin.objects.get(symbol=pk)
             print(symbol)
@@ -129,6 +135,35 @@ class GetCoinInfoView(APIView):
             regSerializer = CoinHistorySerializer(registry, many=True)
             return Response(regSerializer.data)
 
-class GetCoinDetailsView(APIView):
-    pass
+    # Updates a record
+    def put(self, request, pk):
+        updated_data = request.data
+        existing_record = CoinHistory.objects.filter(symbol=request.data['symbol'], date=request.data['date'])
+        serializer = CoinHistorySerializer(instance=existing_record, data=updated_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        else:
+            return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
+    # Deletes the coin and the recors. Dont use it
+    def delete(self, request, pk):
+        pass
+
+
+# More specialized information about the coin in given date
+class GetCoinDetailsView(APIView):
+    def post(self, request, pk):
+        coins = CoinHistory.objects.filter(
+            date__range=(request.data['startDate'], request.data['endDate'])
+        )
+        prices = [CoinHistorySerializer(x,many=False).data for x in coins]
+
+        buy, sell = maxProfit(prices)
+        analyzed_data = {
+            'coin': pk,
+            'buy': buy['date'],
+            'sell': sell['date'],
+            'profit_percentage': sell['high'] * 100 / buy['high'] - 100
+        }
+        return Response(analyzed_data)
