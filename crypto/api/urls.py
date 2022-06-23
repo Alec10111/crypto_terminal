@@ -9,6 +9,6 @@ Endpoints to add:
 
 urlpatterns = [
     path('apiOverview', views.getRoutes, name='api-overview'),
-    path('getCoin', views.GetCoinView.as_view(), name='get-coin'),
-    path('getCoin/<str:pk>', views.GetCoinInfoView.as_view(), name='get-coin-info')
+    path('coin', views.GetCoinView.as_view(), name='coin'),
+    path('coin/<str:pk>', views.GetCoinInfoView.as_view(), name='coin-info')
 ]

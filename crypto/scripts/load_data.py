@@ -20,9 +20,9 @@ def run():
                 elif count == 2:
                     count += 1
                     Coin.objects.create(name=coin_table[5:-4], symbol=record[2])
-                    CoinHistory.objects.create(symbol=record[2], date=record[3], high=record[4], low=record[5],
+                    CoinHistory.objects.create(symbol=record[2], date=record[3][:10], high=record[4], low=record[5],
                                                open=record[6], close=record[7], volume=record[8], marketcap=record[9])
 
                 else:
-                    CoinHistory.objects.create(symbol=record[2], date=record[3], high=record[4], low=record[5],
+                    CoinHistory.objects.create(symbol=record[2], date=record[3][:10], high=record[4], low=record[5],
                                                open=record[6], close=record[7], volume=record[8], marketcap=record[9])
