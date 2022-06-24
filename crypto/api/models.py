@@ -10,7 +10,7 @@ class Coin(models.Model):
 
 
 class CoinHistory(models.Model):
-    symbol = models.CharField(max_length=5, default=''),
+    symbol = models.CharField(max_length=5, default='')
     date = models.TextField(max_length=20)
     high = models.FloatField()
     low = models.FloatField()

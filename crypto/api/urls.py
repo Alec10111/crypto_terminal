@@ -6,7 +6,6 @@ Endpoints to add:
 
 """
 
-
 urlpatterns = [
     path('apiOverview', views.getRoutes, name='api-overview'),
     path('coin', views.GetCoinView.as_view(), name='coin'),

@@ -107,6 +107,7 @@ class GetCoinView(APIView):
             return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
 
+# TODO:
 class GetCoinInfoView(APIView):
     # Idea: Return last record available for that coin
     def get(self, request, pk):
@@ -154,10 +155,12 @@ class GetCoinInfoView(APIView):
 # More specialized information about the coin in given date
 class GetCoinDetailsView(APIView):
     def post(self, request, pk):
+        # symbol = Coin.objects.filter(symbol=pk)
         coins = CoinHistory.objects.filter(
+            symbol=pk,
             date__range=(request.data['startDate'], request.data['endDate'])
         )
-        prices = [CoinHistorySerializer(x,many=False).data for x in coins]
+        prices = [CoinHistorySerializer(x, many=False).data for x in coins]
 
         buy, sell = maxProfit(prices)
         analyzed_data = {
