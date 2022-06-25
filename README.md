@@ -1,5 +1,9 @@
 # Crypto Terminal
-Interactive tool to display useful data about cryptocurrencies
+Interactive tool to display useful data about cryptocurrencies.
+
+Backed done with Django (Django-rest-framework) and PostgreSQL as database.
+
+The dashboard on the frontend is done with Streamlit, with altair for the line charts.
 
 ## Pre-requisites
 You need to have python and postgreSQL installed in your machine
