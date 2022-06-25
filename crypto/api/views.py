@@ -111,9 +111,7 @@ class GetCoinView(APIView):
 class GetCoinInfoView(APIView):
     # Idea: Return last record available for that coin
     def get(self, request, pk):
-        print(request.data)
         symbol = Coin.objects.get(symbol=pk)
-        print(symbol)
         # registry = CoinHistory.objects.filter(symbol=symbol)
         # regSerializer = CoinHistorySerializer(registry, many=True)
         return Response('To do')
@@ -122,13 +120,11 @@ class GetCoinInfoView(APIView):
     def post(self, request, pk):
         if 'date' in request.data.keys():
             symbol = Coin.objects.get(symbol=pk)
-            print(symbol)
             registry = CoinHistory.objects.filter(symbol=symbol).get(date=request.data['date'])
             regSerializer = CoinHistorySerializer(registry, many=False)
             return Response(regSerializer.data)
         else:
             symbol = Coin.objects.get(symbol=pk)
-            print(symbol)
             registry = CoinHistory.objects.filter(
                 symbol=symbol,
                 date__range=(request.data['startDate'], request.data['endDate'])
@@ -170,3 +166,16 @@ class GetCoinDetailsView(APIView):
             'profit_percentage': sell['high'] * 100 / buy['high'] - 100
         }
         return Response(analyzed_data)
+
+
+class GetAllRecordsByDateView(APIView):
+    def post(self, request):
+        req = request.data
+        for key, value in request.POST.items():
+            print("%s %s" % (key, value))
+        records = CoinHistory.objects.filter(
+            symbol__in=request.data['coins'],
+            date__range=(request.data['startDate'], request.data['endDate'])
+        )
+        records_serializer = CoinHistorySerializer(records, many=True)
+        return Response(records_serializer.data)
