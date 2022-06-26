@@ -1,24 +1,16 @@
-from django.test import TestCase, Client, TransactionTestCase
+from django.test import TestCase, Client
 from django.urls import reverse
-from api.models import Coin, CoinHistory
-import json
+from .test_data import base_data
 
 
-class TestViews(TransactionTestCase):
+class TestViews(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        base_data(cls)
 
     def setUp(self):
-        json_data = {
-            "symbol": "BTC",
-            "date": "2018-11-13",
-            "high": 6423.25,
-            "low": 6350.17,
-            "open": 6413.63,
-            "close": 6411.27,
-            "volume": 3939060000.0,
-            "marketcap": 111373453740.24
-        }
-        Coin.objects.create(name='Bitcoin', symbol='BTC')
-        CoinHistory.objects.create(**json_data)
+        # Coin.objects.bulk_create([Coin(**data) for data in test_coins])
+        # CoinHistory.objects.create(**json_data)
         self.client = Client()
         self.api_overview = reverse('api-overview')
         self.coin = reverse('coin')
@@ -33,13 +25,13 @@ class TestViews(TransactionTestCase):
     def test_coin_GET(self):
         response = self.client.get(self.coin)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data, [{
-            "id": 2,
+        self.assertIn({
+            "id": 1,
             "name": "Bitcoin",
             "symbol": "BTC"
-        }])
+        }, response.data)
 
-    def test_get_coin__record_POST(self):
+    def test_get_coin_record_POST(self):
         response = self.client.post(self.post_coin, {
             "start_date": "2018-11-11",
             "end_date": "2018-11-15"
@@ -54,21 +46,44 @@ class TestViews(TransactionTestCase):
             "close": 6411.27,
             "volume": 3939060000.0,
             "marketcap": 111373453740.24
-        },response.data)
+        }, response.data)
+
+    def test_create_record_PUT(self):
+        response = self.client.put(self.post_coin, {
+            "symbol": "ETH",
+            "date": "2018-11-11",
+            "high": 212.999,
+            "low": 208.868,
+            "open": 212.479,
+            "close": 211.34,
+            "volume": 1501600000.0,
+            "marketcap": 21798464880.6961
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+
+    def test_update_record_PUT(self):
+        response = self.client.put(self.post_coin, {
+            "symbol": "ETH",
+            "date": "2018-11-13",
+            "high": 123.25,
+            "low": 123.17,
+            "open":123.63,
+            "close": 123.27,
+            "volume": 123.0,
+            "marketcap": 123.24
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 204)
 
 
 """
-
-    def teste_coin_POST(self):
-        response = self.client.post(self.post_coin_extra, {
-            "startDate": "2018-11-11",
-            "endDate": "2019-11-23"
-        })
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.body, {
-            "coin": 'BTC',
-            "buy": "2019-02-07",
-            "sell": "2019-08-28",
-            "profit_percentage": 2159982105.5081215
-        })
+{
+        "symbol": "ETH",
+        "date": "2018-11-13",
+        "high": 6423.25,
+        "low": 6350.17,
+        "open": 6413.63,
+        "close": 6411.27,
+        "volume": 3939060000.0,
+        "marketcap": 111373453740.24
+    }
 """

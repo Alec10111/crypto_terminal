@@ -4,6 +4,9 @@ from api.models import Coin, CoinHistory
 
 
 def run():
+    """
+    
+    """
     file_list = os.listdir('sample_data/archive')
 
     # Delete all previous records to reset the tables

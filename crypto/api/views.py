@@ -148,25 +148,25 @@ class GetCoinView(APIView):
         symbol = request.data['symbol']
         created_coin = Coin.objects.get(symbol=symbol)
         created_coin_serializer = CoinSerializer(created_coin, many=False)
-        return Response(created_coin_serializer)
+        return Response(created_coin_serializer, status=status.HTTP_201_CREATED)
 
-    # Updates a coin in the table (not sure why)
+    # Updates a coin in the table
     def put(self, request):
         data = request.data
         coin = Coin.objects.get(name=data.name)
         serializer = CoinSerializer(instance=coin, data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
         else:
             return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
-    # Deletes record.
+    # Deletes coin and all records for that coin.
     def delete(self, request):
         symbol = request.data['symbol']
         coin = Coin.objects.get(symbol=symbol)
         if not coin.exists():
-            return Response('Coin not found', status=Http404)
+            return Response('Coin not found', status=status.HTTP_404_NOT_FOUND)
         coin_registry = CoinHistory.objects.filter(symbol=symbol)
         number_of_records = len(coin_registry)
         res = {
@@ -188,6 +188,7 @@ class GetCoinInfoView(APIView):
 
     # TODO: Handle case when start and end dates are equal
     # TODO: Extract validations to date parameters
+
     # Returns single record for the date, or the interval
     def post(self, request, pk):
         serializer, error = date_validations(request, pk)
@@ -195,14 +196,19 @@ class GetCoinInfoView(APIView):
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.data)
 
-    # Updates record
+    # Updates or Creates a record
     def put(self, request, pk):
-        updated_data = request.data
+        data = request.data
         existing_record = CoinHistory.objects.filter(symbol=request.data['symbol'], date=request.data['date'])
-        serializer = CoinHistorySerializer(instance=existing_record, data=updated_data)
+        if not existing_record.exists():
+            coin = CoinHistory.objects.create(**data)
+            serializer = CoinHistorySerializer(coin)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        serializer = CoinHistorySerializer(instance=existing_record, data=data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data)
+            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
         else:
             return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
