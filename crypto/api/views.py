@@ -144,12 +144,11 @@ class GetCoinView(APIView):
 
     # Creates a new coin on the coin table
     def post(self, request):
-        data = request.data
-        coin = Coin.objects.create(
-            name=data.name,
-            symbol=data.symbol
-        )
-        return Response(data)
+        Coin.objects.create(**request.data)
+        symbol = request.data['symbol']
+        created_coin = Coin.objects.get(symbol=symbol)
+        created_coin_serializer = CoinSerializer(created_coin, many=False)
+        return Response(created_coin_serializer)
 
     # Updates a coin in the table (not sure why)
     def put(self, request):
@@ -196,25 +195,6 @@ class GetCoinInfoView(APIView):
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.data)
 
-    """
-    def post(self, request, pk):
-        keys = request.data.keys()
-        symbol = Coin.objects.get(symbol=pk)
-        if 'date' in keys:
-            registry = CoinHistory.objects.filter(symbol=symbol).get(date=request.data['date'])
-            regSerializer = CoinHistorySerializer(registry, many=False)
-            return Response(regSerializer.data)
-        elif ('start_date' in keys) and ('end_date' in keys):
-            registry = CoinHistory.objects.filter(
-                symbol=symbol,
-                date__range=(request.data['start_date'], request.data['end_date'])
-            )
-            regSerializer = CoinHistorySerializer(registry, many=True)
-            return Response(regSerializer.data)
-        else:
-            return Response('Wrong arguments in the request', status=Http404)
-    """
-
     # Updates record
     def put(self, request, pk):
         updated_data = request.data
@@ -242,26 +222,6 @@ class GetCoinInfoView(APIView):
 # TODO: Extract function to return output in json
 
 # More specialized information about the coin in given date
-"""
-class GetCoinDetailsView(APIView):
-    def post(self, request, pk):
-        # symbol = Coin.objects.filter(symbol=pk)
-        coins = CoinHistory.objects.filter(
-            symbol=pk,
-            date__range=(request.data['start_date'], request.data['end_date'])
-        )
-        prices = [CoinHistorySerializer(x, many=False).data for x in coins]
-
-        buy, sell = maxProfit(prices)
-        analyzed_data = {
-            'coin': pk,
-            'buy': buy['date'],
-            'sell': sell['date'],
-            'profit_percentage': sell['high'] * 100 / buy['high'] - 100
-        }
-        return Response(analyzed_data)
-"""
-
 
 class GetCoinDetailsView(APIView):
     def post(self, request, pk):

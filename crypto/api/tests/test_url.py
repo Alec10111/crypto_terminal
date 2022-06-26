@@ -1,14 +1,6 @@
-from django.test import TestCase
-import json
-from django.contrib.auth.models import User
 from django.urls import reverse, resolve
-from rest_framework.authtoken.models import Token
-from rest_framework.test import APITestCase
-from rest_framework import status
 from django.test import SimpleTestCase
 from api.views import *
-
-version = 'v1'
 
 
 class TestUrls(SimpleTestCase):
@@ -16,7 +8,18 @@ class TestUrls(SimpleTestCase):
         url = reverse('api-overview')
         self.assertEqual(resolve(url).func, getRoutes)
 
-    # def test_getCoin(self):
-    #     url = reverse('get-coin')
-    #     self.assertEqual(resolve(url).func, getRoutes)
+    def test_coin(self):
+        url = reverse('coin')
+        self.assertEqual(resolve(url).func.view_class, GetCoinView)
 
+    def test_coin_allrecords(self):
+        url = reverse('all-records-by-date')
+        self.assertEqual(resolve(url).func.view_class, GetAllRecordsByDateView)
+
+    def test_coin_pk(self):
+        url = reverse('coin-info', kwargs={'pk': 'BTC'})
+        self.assertEqual(resolve(url).func.view_class, GetCoinInfoView)
+
+    def test_coin_extra(self):
+        url = reverse('coin-details-info', kwargs={'pk': 'BTC'})
+        self.assertEqual(resolve(url).func.view_class, GetCoinDetailsView)
