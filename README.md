@@ -10,7 +10,7 @@ You need to have python and postgreSQL installed in your machine
 ## Setup
 First you have to either clone the gitbub repo
 ```console
-git clone https://github.com/Alec10111/crypto_terminal
+git clone [https://github.com/Alec10111/crypto_terminal](https://github.com/Alec10111/crypto_terminal)
 ```
 or if you have the source .zip file, just unzip it.
 
