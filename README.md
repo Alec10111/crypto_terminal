@@ -22,6 +22,18 @@ Now you have to install the necessary dependencies to run the project. If you ha
 ```console
 pip install -r requirements.txt
 ```
+### DB setup
+In order to set up the database we need to run
+```console
+python manage.py makemigrations
+python manage.py migrate
+```
+This will create our tables according to the models on the project.
+Now to load the sample data we need to run the script `load_data.py`
+```console
+python manage.py runscript load_data
+```
+
 ## Run
 To run the project we have to spin up the backend and the frontend.
 ```console
