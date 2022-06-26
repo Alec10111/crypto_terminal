@@ -11,7 +11,7 @@ class Coin(models.Model):
 
 class CoinHistory(models.Model):
     symbol = models.CharField(max_length=5)
-    date = models.TextField(max_length=20)
+    date = models.DateField()
     high = models.FloatField()
     low = models.FloatField()
     open = models.FloatField()
