@@ -25,7 +25,4 @@ All necessary data is in `data/archive`.
 - Coin_history: coin_id(fk),Date,High,Low,Open,Close,Volume,Marketcap
 
 
-### Idea 1 (extras)
-- Favourites: User_Id, Coin_Faved, Date
-
 

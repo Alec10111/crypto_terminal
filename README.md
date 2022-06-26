@@ -12,7 +12,8 @@ First you have to either clone the gitbub repo
 ```console
 git clone https://github.com/Alec10111/crypto_terminal
 ```
-Or if you have the source .zip file, just unzip it.
+or if you have the source .zip file, just unzip it.
+
 Cd into the project directory
 ```console
 cd crypto_terminal

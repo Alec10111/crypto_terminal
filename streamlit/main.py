@@ -2,50 +2,34 @@ import streamlit as st
 import requests
 from datetime import datetime
 import pandas as pd
-import numpy as np
 import altair as alt
-import plotly.express as px
-import json
+from utils import *
 
 
-class DateTimeEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, datetime):
-            return o.isoformat()
-
-        return json.JSONEncoder.default(self, o)
-
-
-def getSymbol(cList, coin):
-    filtered = list(filter(lambda x: x['name'] == coin, cList))
-    dicte = filtered[0]
-    return dicte['symbol']
-
-
-def flatten(xss):
-    return [x for xs in xss for x in xs]
 
 
 header = st.container()
-input_single_coin = st.container()
+cInfo_header = st.container()
+input_single_coin, specific_date_metrics = st.columns(2)
 single_metrics = st.container()
 input_compare_coins = st.container()
 compare_graphics = st.container()
 
-getCoins = requests.get('http://localhost:8000/v1/coin')
+getCoins = requests.get('http://localhost:8000/api/coin')
 coins_dict = getCoins.json()
-coins = [coin['name'] for coin in getCoins.json()]
+coins = [coin['name'] for coin in coins_dict]
 
 with header:
     st.title('Crypto Terminal')
     st.text('This project is an interactive tool to display useful data about cryptocurrencies.')
     st.text('The first sections displays stats for a given currency and best buy and sell dates.')
-    st.text('The second section you can compare multiple coins over time.')
+    st.text('On the second section you can compare multiple coins over time.')
     st.text('Source code: https://github.com/Alec10111/crypto_terminal')
 
-with input_single_coin:
+with cInfo_header:
     st.header('Currency Info')
 
+with input_single_coin:
     selected_coin = st.selectbox('Select a coin', options=coins)
     sel_stat = st.selectbox(
         'Select stat', ('High', 'Low', 'Open', 'Close', 'Volume', 'Marketcap'), key='sel_stat')
@@ -57,17 +41,29 @@ with input_single_coin:
     start_end_time = st.slider("Select date range", value=(
         datetime(2019, 1, 9), datetime(2020, 9, 30)), format="YYYY-MM-DD")
 
+with specific_date_metrics:
+    select_single_date = st.date_input('Date specific data', datetime(2019, 1, 1))
+    req_single_date = requests.post(
+        'http://localhost:8000/api/coin/{0}'.format(symbol), data={
+            'date': select_single_date
+        }).json()
+    formatted_single_date_data = {k: round(v, 4) for k, v in req_single_date.items() if
+                                  k in ['high', 'low', 'open', 'close', 'volume', 'marketcap']}
+    st.json(formatted_single_date_data)
 
 with single_metrics:
     st.subheader('Stats over time ( {} )'.format(symbol))
 
     req2 = requests.post(
-        'http://localhost:8000/v1/coin/{0}'.format(symbol), data={
-            'startDate': start_end_time[0],
-            'endDate': start_end_time[1]
+        'http://localhost:8000/api/coin/{0}'.format(symbol), data={
+            'start_date': start_end_time[0],
+            'end_date': start_end_time[1]
         })
-    reqf = requests.post('http://localhost:8000/v1/coin/extra/{0}'.format(
-        symbol), data={"startDate": start_end_time[0], "endDate": start_end_time[1]})
+    reqf = requests.post(
+        'http://localhost:8000/api/coin/extra/{0}'.format(symbol), data={
+            "start_date": start_end_time[0],
+            "end_date": start_end_time[1]
+        })
     # chart_data = pd.DataFrame(
     #     {
     #         'Date': [record['date'] for record in req2.json()],
@@ -99,8 +95,7 @@ with single_metrics:
     adv_data = reqf.json()
     st.markdown('- **Best buy date**:  {}'.format(adv_data['buy']))
     st.markdown('- **Best sell date**:  {}'.format(adv_data['sell']))
-    st.markdown(
-        '- **Profit percentage**: {:.2f}\%'.format(adv_data['profit_percentage']))
+    st.markdown('- **Profit percentage**: {:.2f}\%'.format(adv_data['profit_percentage']))
 
 with input_compare_coins:
     st.header('Compare Currencies')
@@ -119,9 +114,9 @@ with input_compare_coins:
 
 with compare_graphics:
     mul_req_list = [requests.post(
-        'http://localhost:8000/v1/coin/{0}'.format(sym), data={
-            'startDate': start_end_time_mul[0],
-            'endDate': start_end_time_mul[1]
+        'http://localhost:8000/api/coin/{0}'.format(sym), data={
+            'start_date': start_end_time_mul[0],
+            'end_date': start_end_time_mul[1]
         }).json() for sym in symbols]
 
     flattened_list = []

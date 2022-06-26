@@ -1,5 +1,3 @@
-from django.shortcuts import render
-
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import permissions
@@ -10,9 +8,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Coin, CoinHistory
 from .serializers import CoinSerializer, GroupSerializer, UserSerializer, CoinHistorySerializer
-from django.db.models import Max
 from rest_framework import status
-from .utils import maxProfit
+from .utils import maxProfit, date_validations
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -38,42 +35,100 @@ class GroupViewSet(viewsets.ModelViewSet):
 def getRoutes(request):
     routes = [
         {
-            'Endpoint': '/coin',
+            'Endpoint': 'api/overview',
+            'method': 'GET',
+            'body': None,
+            'description': 'returns an array with all available endpoints'
+        },
+        {
+            'Endpoint': 'api/coin',
             'method': 'GET',
             'body': None,
             'description': 'returns an array with all available coins'
         },
         {
-            'Endpoint': '/coin',
-            'method': 'PUT',
-            'body': {
-                "id": 13241,
-                "symbol": "BTC",
-                "date": "2017-10-02 23:59:59",
-                "high": 4470.22998046875,
-                "low": 4377.4599609375,
-                "open": 4395.81005859375,
-                "close": 4409.31982421875,
-                "volume": 1431730048.0,
-                "marketcap": 73195646775.8
-            },
-            'description': 'adds a record to the coinHistory table'
-        },
-        {
-            'Endpoint': '/coin/<str:pk>',
-            'method': 'GET',
-            'body': None,
-            'description': 'returns latest information about the coin'
-        },
-        {
-            'Endpoint': '/getCoin',
+            'Endpoint': 'api/coin',
             'method': 'POST',
             'body': {
-                'coin': 'cardano',
+                'symbol': 'NC',
+                'name': 'Newcoin'
+            },
+            'description': 'adds new coin to the database. Needs auth'
+        },
+        {
+            'Endpoint': 'api/coin',
+            'method': 'PUT',
+            'body': {
+                "id": 6,
+                'symbol': 'UBTC',
+                'name': 'UpdatedBitcoin'
+            },
+            'description': 'updates a coin name and symbol in the database. Needs auth'
+        },
+        {
+            'Endpoint': 'api/coin/<pk>',
+            'method': 'GET',
+            'body': None,
+            'description': 'returns latest information about the coin with symbol=pk'
+        },
+        {
+            'Endpoint': 'api/coin/<pk>',
+            'method': 'POST',
+            'body': {
                 'startDate': '2022-03-03',
                 'endDate': '2022-04-03'
             },
-            'description': 'returns best prices to buy and sell within given dates'
+            'description': 'returns records within given dates about the coin with symbol=pk'
+        },
+        {
+            'Endpoint': 'api/coin/<pk>',
+            'method': 'POST',
+            'body': {
+                'date': '2022-03-03'
+            },
+            'description': 'returns records for given date about the coin with symbol=pk'
+        },
+        {
+            'Endpoint': 'api/coin/<pk>',
+            'method': 'PUT',
+            'body': {
+                "date": "2019-01-10",
+                "high": 2.9847077975,
+                "low": 2.3791120974,
+                "open": 2.91424758223,
+                "close": 2.4361243181,
+                "volume": 1205353503.11214,
+                "marketcap": 2207725769.14475
+            },
+            'description': 'updates record on the coin with symbol=pk'
+        },
+        {
+            'Endpoint': 'api/coin/<pk>',
+            'method': 'DELETE',
+            'body': {
+                "date": "2019-01-10",
+            },
+            'description': 'deletes record on the coin with symbol=pk'
+        },
+        {
+            'Endpoint': 'api/coin/extra/<pk>',
+            'method': 'POST',
+            'body': {
+                "startDate": "2018-11-11",
+                "endDate": "2018-11-23"
+            },
+            'description': 'returns best buy-sell dates and profit percentage on the coin with symbol=pk'
+        },
+        {
+            'Endpoint': 'api/coin/allrecords',
+            'method': 'POST',
+            'body': {
+                'coins': ['ADA', 'BTC'],
+                'startDate': '2022-03-03',
+                'endDate': '2022-04-03'
+            },
+            'description': 'returns records on given date range for provided coins. If coins parameter is not '
+                           'present, it returns all available records on that range. '
         }
 
     ]
@@ -94,6 +149,7 @@ class GetCoinView(APIView):
             name=data.name,
             symbol=data.symbol
         )
+        return Response(data)
 
     # Updates a coin in the table (not sure why)
     def put(self, request):
@@ -106,8 +162,23 @@ class GetCoinView(APIView):
         else:
             return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
+    # Deletes record.
+    def delete(self, request):
+        symbol = request.data['symbol']
+        coin = Coin.objects.get(symbol=symbol)
+        if not coin.exists():
+            return Response('Coin not found', status=Http404)
+        coin_registry = CoinHistory.objects.filter(symbol=symbol)
+        number_of_records = len(coin_registry)
+        res = {
+            'coin': symbol,
+            'deleted': '{} records'.format(number_of_records)
+        }
+        coin_registry.delete()
+        coin.delete()
+        return Response(res)
 
-# TODO:
+
 class GetCoinInfoView(APIView):
     # Idea: Return last record available for that coin
     def get(self, request, pk):
@@ -116,23 +187,35 @@ class GetCoinInfoView(APIView):
         # regSerializer = CoinHistorySerializer(registry, many=True)
         return Response('To do')
 
+    # TODO: Handle case when start and end dates are equal
+    # TODO: Extract validations to date parameters
     # Returns single record for the date, or the interval
     def post(self, request, pk):
-        if 'date' in request.data.keys():
-            symbol = Coin.objects.get(symbol=pk)
+        serializer, error = date_validations(request, pk)
+        if serializer is None:
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.data)
+
+    """
+    def post(self, request, pk):
+        keys = request.data.keys()
+        symbol = Coin.objects.get(symbol=pk)
+        if 'date' in keys:
             registry = CoinHistory.objects.filter(symbol=symbol).get(date=request.data['date'])
             regSerializer = CoinHistorySerializer(registry, many=False)
             return Response(regSerializer.data)
-        else:
-            symbol = Coin.objects.get(symbol=pk)
+        elif ('start_date' in keys) and ('end_date' in keys):
             registry = CoinHistory.objects.filter(
                 symbol=symbol,
-                date__range=(request.data['startDate'], request.data['endDate'])
+                date__range=(request.data['start_date'], request.data['end_date'])
             )
             regSerializer = CoinHistorySerializer(registry, many=True)
             return Response(regSerializer.data)
+        else:
+            return Response('Wrong arguments in the request', status=Http404)
+    """
 
-    # Updates a record
+    # Updates record
     def put(self, request, pk):
         updated_data = request.data
         existing_record = CoinHistory.objects.filter(symbol=request.data['symbol'], date=request.data['date'])
@@ -143,18 +226,29 @@ class GetCoinInfoView(APIView):
         else:
             return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
-    # Deletes the coin and the recors. Dont use it
+    # Deletes record.
     def delete(self, request, pk):
-        pass
+        record = CoinHistory.objects.get(symbol=pk, date=request.data['date'])
+        recSerializer = CoinHistorySerializer(record, many=False)
+        if recSerializer.is_valid():
+            record.delete()
+            return Response(recSerializer.data)
+        else:
+            return Response('Record not found', status=status.HTTP_404_NOT_FOUND)
 
+
+# TODO: Handle case when start and end dates are equal
+# TODO: Extract validations to date parameters
+# TODO: Extract function to return output in json
 
 # More specialized information about the coin in given date
+"""
 class GetCoinDetailsView(APIView):
     def post(self, request, pk):
         # symbol = Coin.objects.filter(symbol=pk)
         coins = CoinHistory.objects.filter(
             symbol=pk,
-            date__range=(request.data['startDate'], request.data['endDate'])
+            date__range=(request.data['start_date'], request.data['end_date'])
         )
         prices = [CoinHistorySerializer(x, many=False).data for x in coins]
 
@@ -166,16 +260,43 @@ class GetCoinDetailsView(APIView):
             'profit_percentage': sell['high'] * 100 / buy['high'] - 100
         }
         return Response(analyzed_data)
+"""
 
 
+class GetCoinDetailsView(APIView):
+    def post(self, request, pk):
+        serializer, error = date_validations(request, pk)
+        if serializer is None:
+            return Response(error, status=status.HTTP_400_BAD_REQUEST)
+
+        buy, sell = maxProfit(serializer.data)
+        analyzed_data = {
+            'coin': pk,
+            'buy': buy['date'],
+            'sell': sell['date'],
+            'profit_percentage': sell['high'] * 100 / buy['high'] - 100
+        }
+        return Response(analyzed_data)
+
+
+# Not used
 class GetAllRecordsByDateView(APIView):
     def post(self, request):
-        req = request.data
-        for key, value in request.POST.items():
-            print("%s %s" % (key, value))
+
+        start_date = request.data['start_date']
+        end_date = request.data['end_date']
+
+        if start_date == end_date:
+            return Response('Dates should be different', status=status.HTTP_400_BAD_REQUEST)
+
+        # Get all records in given range
         records = CoinHistory.objects.filter(
-            symbol__in=request.data['coins'],
-            date__range=(request.data['startDate'], request.data['endDate'])
+            date__range=(start_date, end_date)
         )
+        # If coins param provided, get only those coins
+        if 'coins' in request.data.keys():
+            records = records.filter(
+                symbol__in=request.data['coins']
+            )
         records_serializer = CoinHistorySerializer(records, many=True)
         return Response(records_serializer.data)

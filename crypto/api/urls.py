@@ -1,13 +1,8 @@
 from django.urls import path
 from . import views
 
-"""
-Endpoints to add:
-
-"""
-
 urlpatterns = [
-    path('apiOverview', views.getRoutes, name='api-overview'),
+    path('overview', views.getRoutes, name='api-overview'),
     path('coin', views.GetCoinView.as_view(), name='coin'),
     path('coin/allrecords', views.GetAllRecordsByDateView.as_view(), name='all-records-by-date'),
     path('coin/<str:pk>', views.GetCoinInfoView.as_view(), name='coin-info'),
