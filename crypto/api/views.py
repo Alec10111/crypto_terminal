@@ -6,8 +6,7 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Coin, CoinHistory
-from .serializers import CoinSerializer, GroupSerializer, UserSerializer, CoinHistorySerializer, \
-    CoinHistoryDateSerializer
+from .serializers import CoinSerializer, GroupSerializer, UserSerializer, CoinHistorySerializer
 from rest_framework import status
 from .utils import maxProfit, date_validations
 from django.db.models import Max, Min
@@ -54,17 +53,25 @@ def getRoutes(request):
                 'symbol': 'NC',
                 'name': 'Newcoin'
             },
-            'description': 'adds new coin to the database. Needs auth'
+            'description': 'adds new coin to the database'
         },
         {
             'Endpoint': 'api/coin',
             'method': 'PUT',
             'body': {
-                "id": 6,
                 'symbol': 'UBTC',
                 'name': 'UpdatedBitcoin'
             },
-            'description': 'updates a coin name and symbol in the database. Needs auth'
+            'description': 'updates a coin name and symbol in the database'
+        },
+        {
+            'Endpoint': 'api/coin',
+            'method': 'DELETE',
+            'body': {
+                'symbol': 'NC',
+                'name': 'Newcoin'
+            },
+            'description': 'deletes coin from the database'
         },
         {
             'Endpoint': 'api/coin/<pk>',
@@ -149,18 +156,7 @@ class GetCoinView(APIView):
         symbol = request.data['symbol']
         created_coin = Coin.objects.get(symbol=symbol)
         created_coin_serializer = CoinSerializer(created_coin, many=False)
-        return Response(created_coin_serializer, status=status.HTTP_201_CREATED)
-
-    # Updates a coin in the table
-    def put(self, request):
-        data = request.data
-        coin = Coin.objects.get(name=data.name)
-        serializer = CoinSerializer(instance=coin, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
-        else:
-            return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
+        return Response(created_coin_serializer.data, status=status.HTTP_201_CREATED)
 
     # Deletes coin and all records for that coin.
     def delete(self, request):
@@ -177,6 +173,17 @@ class GetCoinView(APIView):
         coin_registry.delete()
         coin.delete()
         return Response(res)
+
+
+class PutCoinView(APIView):
+    # Updates a coin in the table
+    def put(self, request, pk):
+        data = request.data
+        existing_coin = Coin.objects.filter(symbol=pk)
+        if not existing_coin.exists():
+            return Response('Coin not found', status=status.HTTP_404_NOT_FOUND)
+        existing_coin.update(**data)
+        return Response('Coin updated', status=status.HTTP_204_NO_CONTENT)
 
 
 class GetCoinInfoView(APIView):
@@ -204,13 +211,6 @@ class GetCoinInfoView(APIView):
         else:
             existing_record.update(**data)
             return Response('Record updated', status=status.HTTP_204_NO_CONTENT)
-
-        # serializer = CoinHistorySerializer(instance=existing_record, data=data)
-        # if serializer.is_valid():
-        #     serializer.update()
-        #     return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
-        # else:
-        #     return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
     # Deletes record.
     def delete(self, request, pk):
@@ -272,8 +272,7 @@ class GetCoinDateRangeView(APIView):
 
         max_serializer = CoinHistorySerializer(max_obj, many=False)
         min_serializer = CoinHistorySerializer(min_obj, many=False)
-        # if not (max_serializer.is_valid() and min_serializer.is_valid()):
-        #     return Response('Something wrong happened with your request', status=status.HTTP_400_BAD_REQUEST)
+
         return Response({
             'min_date': min_serializer.data['date'],
             'max_date': max_serializer.data['date']

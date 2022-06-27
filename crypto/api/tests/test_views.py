@@ -4,6 +4,7 @@ from .test_data import base_data
 from api.models import Coin, CoinHistory
 from api.serializers import CoinHistorySerializer
 
+
 class TestViews(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -15,7 +16,11 @@ class TestViews(TestCase):
         self.client = Client()
         self.api_overview = reverse('api-overview')
         self.coin = reverse('coin')
+        self.put_coin = reverse('coin-update', kwargs={'pk': 'BTC'})
+        self.put_coin_neg = reverse('coin-update', kwargs={'pk': 'NOT'})
+
         self.post_coin = reverse('coin-info', kwargs={'pk': 'BTC'})
+
         self.post_coin_extra = reverse('coin-details-info', kwargs={'pk': 'BTC'})
 
     def test_api_overview_GET(self):
@@ -31,6 +36,32 @@ class TestViews(TestCase):
             "name": "Bitcoin",
             "symbol": "BTC"
         }, response.data)
+
+    def test_create_coin_POST(self):
+        response = self.client.post(self.coin, {
+            "name": "Newcoin",
+            "symbol": "NC"
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual({
+            "id": 4,
+            "name": "Newcoin",
+            "symbol": "NC"
+        }, response.data)
+
+    def test_update_coin_PUT(self):
+        response = self.client.put(self.put_coin, {
+            "name": "UpdatedCoin",
+            "symbol": "UPC"
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 204)
+
+    def test_negative_update_coin_PUT(self):
+        response = self.client.put(self.put_coin_neg, {
+            "name": "UpdatedCoin",
+            "symbol": "UPC"
+        }, content_type='application/json')
+        self.assertEqual(response.status_code, 404)
 
     def test_get_coin_record_date_POST(self):
         response = self.client.post(self.post_coin, {

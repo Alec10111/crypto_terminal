@@ -1,14 +1,5 @@
-from django.contrib.auth.models import User, Group
-from rest_framework import viewsets
-from rest_framework import permissions
-from django.http import JsonResponse
-from rest_framework.decorators import api_view
-from django.http import Http404
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from .models import Coin, CoinHistory
-from .serializers import CoinSerializer, GroupSerializer, UserSerializer, CoinHistorySerializer
-from rest_framework import status
+from .serializers import CoinHistorySerializer
 
 
 def maxProfit(prices):
@@ -37,7 +28,7 @@ def date_validations(request, pk):
 
         registry = CoinHistory.objects.filter(symbol=symbol, date=request.data['date'])
 
-        regSerializer = CoinHistorySerializer(registry,many=True)
+        regSerializer = CoinHistorySerializer(registry, many=True)
 
         return regSerializer, ''
 
