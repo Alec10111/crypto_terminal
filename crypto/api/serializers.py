@@ -25,4 +25,10 @@ class CoinSerializer(ModelSerializer):
 class CoinHistorySerializer(ModelSerializer):
     class Meta:
         model = CoinHistory
-        fields = ['symbol', 'date', 'high', 'low', 'open', 'close', 'volume', 'marketcap']
+        fields = '__all__'
+
+
+class CoinHistoryDateSerializer(ModelSerializer):
+    class Meta:
+        model = CoinHistory
+        fields = ['date']

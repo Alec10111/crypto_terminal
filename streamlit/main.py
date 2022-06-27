@@ -5,19 +5,16 @@ import pandas as pd
 import altair as alt
 from utils import *
 
-
-
-
 header = st.container()
 cInfo_header = st.container()
 input_single_coin, specific_date_metrics = st.columns(2)
-single_metrics = st.container()
+single_graphics = st.container()
 input_compare_coins = st.container()
 compare_graphics = st.container()
 
-getCoins = requests.get('http://localhost:8000/api/coin')
-coins_dict = getCoins.json()
+coins_dict = requests.get('http://localhost:8000/api/coin').json()
 coins = [coin['name'] for coin in coins_dict]
+stats_list = ['High', 'Low', 'Open', 'Close', 'Volume', 'Marketcap']
 
 with header:
     st.title('Crypto Terminal')
@@ -31,68 +28,55 @@ with cInfo_header:
 
 with input_single_coin:
     selected_coin = st.selectbox('Select a coin', options=coins)
+    symbol = get_symbol(coins_dict, selected_coin)
     sel_stat = st.selectbox(
-        'Select stat', ('High', 'Low', 'Open', 'Close', 'Volume', 'Marketcap'), key='sel_stat')
+        'Select stat', stats_list, key='sel_stat')
+    max_min_date = requests.get('http://localhost:8000/api/coin/range/{}'.format(symbol)).json()
+    min_date = datetime.strptime(max_min_date['min_date'], '%Y-%m-%d')
+    max_date = datetime.strptime(max_min_date['max_date'], '%Y-%m-%d')
 
-    symbol = getSymbol(coins_dict, selected_coin)
-    # start_date = st.date_input(
-    #     'Insert start date', value=datetime(2018, 5, 17))
-    # end_date = st.date_input('Insert end date', value=datetime(2019, 5, 17))
-    start_end_time = st.slider("Select date range", value=(
-        datetime(2019, 1, 9), datetime(2020, 9, 30)), format="YYYY-MM-DD")
-
+    start_end_time = st.slider("Select date range", max_date, min_date, value=(min_date, max_date), format="YYYY-MM-DD")
+    if start_end_time[0] == start_end_time[1]:
+        st.warning('Dates must be different.')
+        st.stop()
 with specific_date_metrics:
-    select_single_date = st.date_input('Date specific data', datetime(2019, 1, 1))
+    select_single_date = st.date_input('Date specific data', min_date, min_date, max_date)
     req_single_date = requests.post(
         'http://localhost:8000/api/coin/{0}'.format(symbol), data={
             'date': select_single_date
         }).json()
-    formatted_single_date_data = {k: round(v, 4) for k, v in req_single_date.items() if
-                                  k in ['high', 'low', 'open', 'close', 'volume', 'marketcap']}
+    formatted_single_date_data = {
+        k.capitalize(): round(v, 4) for k, v in req_single_date[0].items() if k.capitalize() in stats_list
+    }
     st.json(formatted_single_date_data)
 
-with single_metrics:
+with single_graphics:
     st.subheader('Stats over time ( {} )'.format(symbol))
 
-    req2 = requests.post(
+    req_range_date = requests.post(
         'http://localhost:8000/api/coin/{0}'.format(symbol), data={
-            'start_date': start_end_time[0],
-            'end_date': start_end_time[1]
+            'start_date': start_end_time[0].date(),
+            'end_date': start_end_time[1].date()
         })
-    reqf = requests.post(
+    req_extra = requests.post(
         'http://localhost:8000/api/coin/extra/{0}'.format(symbol), data={
-            "start_date": start_end_time[0],
-            "end_date": start_end_time[1]
+            "start_date": start_end_time[0].date(),
+            "end_date": start_end_time[1].date()
         })
-    # chart_data = pd.DataFrame(
-    #     {
-    #         'Date': [record['date'] for record in req2.json()],
-    #         sel_stat: [record[sel_stat] for record in req2.json()]
 
-    #     }
-    # )
-    # chart_data = chart_data.set_index('Date')
-    chart_data = pd.DataFrame(req2.json())
-    display_df = chart_data[['date', 'high', 'low',
-                             'open', 'close', 'volume', 'marketcap']]
-    reduced_df = chart_data[['date', 'symbol', sel_stat.lower()]]
-    # reduced_df = reduced_df.set_index('date')
-    # st.dataframe(reduced_df)
+    reduced_df = pd.DataFrame(req_range_date.json())[['date', 'symbol', sel_stat.lower()]]
 
     selection = alt.selection_interval(bind='scales')
-    selection2 = alt.selection_multi(fields=[sel_stat.lower()])
     chart1 = alt.Chart(reduced_df).mark_line().encode(
         x=alt.X('date:T'),
         y=alt.Y(sel_stat.lower()),
         color=alt.Color("symbol:N")
     ).add_selection(
-        selection, selection2
+        selection
     )
     st.altair_chart(chart1, use_container_width=True)
 
-    # st.line_chart(reduced_df, use_container_width=True)
-
-    adv_data = reqf.json()
+    adv_data = req_extra.json()
     st.markdown('- **Best buy date**:  {}'.format(adv_data['buy']))
     st.markdown('- **Best sell date**:  {}'.format(adv_data['sell']))
     st.markdown('- **Profit percentage**: {:.2f}\%'.format(adv_data['profit_percentage']))
@@ -101,22 +85,32 @@ with input_compare_coins:
     st.header('Compare Currencies')
 
     selected_coins = st.multiselect(
-        'Select a coin', options=coins, default=['Cardano', 'USDCoin', 'XRP'])
+        'Select a coin', options=coins, default=['Cardano', 'USD Coin', 'XRP'])
+    if not selected_coins:
+        st.warning('Please select at least one coin.')
+        st.stop()
     sel_stat_mul = st.selectbox(
-        'Select stat', ('High', 'Low', 'Open', 'Close', 'Volume', 'Marketcap'), key='sel_stat_mul')
+        'Select stat', stats_list, key='sel_stat_mul')
 
-    symbols = [getSymbol(coins_dict, coin) for coin in selected_coins]
-    # start_date = st.date_input(
-    #     'Insert start date', value=datetime(2018, 5, 17))
-    # end_date = st.date_input('Insert end date', value=datetime(2019, 5, 17))
-    start_end_time_mul = st.slider("Adjust date range", value=(
-        datetime(2019, 1, 19), datetime(2020, 9, 30)), format="YYYY-MM-DD")
+    symbols = [get_symbol(coins_dict, coin) for coin in selected_coins]
+    max_min_date_mul = [requests.get('http://localhost:8000/api/coin/range/{}'.format(sym)).json() for sym in symbols]
+    min_mul = max([rec['min_date'] for rec in max_min_date_mul])
+    max_mul = min([rec['max_date'] for rec in max_min_date_mul])
+    min_mul = datetime.strptime(min_mul, '%Y-%m-%d')
+    max_mul = datetime.strptime(max_mul, '%Y-%m-%d')
+
+    start_end_time_mul = st.slider("Adjust date range", max_mul, min_mul, value=(min_mul, max_mul),
+                                   format="YYYY-MM-DD")
+
+    if start_end_time_mul[0] == start_end_time_mul[1]:
+        st.warning('Dates must be different.')
+        st.stop()
 
 with compare_graphics:
     mul_req_list = [requests.post(
         'http://localhost:8000/api/coin/{0}'.format(sym), data={
-            'start_date': start_end_time_mul[0],
-            'end_date': start_end_time_mul[1]
+            'start_date': start_end_time_mul[0].date(),
+            'end_date': start_end_time_mul[1].date()
         }).json() for sym in symbols]
 
     flattened_list = []
@@ -124,10 +118,7 @@ with compare_graphics:
         for x in xs:
             flattened_list.append(x)
 
-    mul_df = pd.DataFrame(flattened_list)
-    reduced_df_mul = mul_df[['date', 'symbol', sel_stat_mul.lower()]]
-    # reduced_df_mul = reduced_df_mul.set_index('date')
-    # st.dataframe(reduced_df_mul)
+    reduced_df_mul = pd.DataFrame(flattened_list)[['date', 'symbol', sel_stat_mul.lower()]]
 
     chart2 = alt.Chart(reduced_df_mul).mark_line().encode(
         x=alt.X('date:T'),

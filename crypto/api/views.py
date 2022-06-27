@@ -3,13 +3,14 @@ from rest_framework import viewsets
 from rest_framework import permissions
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
-from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Coin, CoinHistory
-from .serializers import CoinSerializer, GroupSerializer, UserSerializer, CoinHistorySerializer
+from .serializers import CoinSerializer, GroupSerializer, UserSerializer, CoinHistorySerializer, \
+    CoinHistoryDateSerializer
 from rest_framework import status
 from .utils import maxProfit, date_validations
+from django.db.models import Max, Min
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -179,17 +180,14 @@ class GetCoinView(APIView):
 
 
 class GetCoinInfoView(APIView):
-    # Idea: Return last record available for that coin
+    # Returns last record available for that coin
     def get(self, request, pk):
-        symbol = Coin.objects.get(symbol=pk)
-        # registry = CoinHistory.objects.filter(symbol=symbol)
-        # regSerializer = CoinHistorySerializer(registry, many=True)
-        return Response('To do')
+        max_date_record = CoinHistory.objects.filter(symbol=pk).aggregate(Max('date'))
+        max_obj = CoinHistory.objects.get(symbol=pk, date=max_date_record['date__max'])
+        max_serializer = CoinHistorySerializer(max_obj, many=False)
+        return Response(max_serializer.data)
 
-    # TODO: Handle case when start and end dates are equal
-    # TODO: Extract validations to date parameters
-
-    # Returns single record for the date, or the interval
+    # Returns single record for the date, or the date range
     def post(self, request, pk):
         serializer, error = date_validations(request, pk)
         if serializer is None:
@@ -202,30 +200,27 @@ class GetCoinInfoView(APIView):
         existing_record = CoinHistory.objects.filter(symbol=request.data['symbol'], date=request.data['date'])
         if not existing_record.exists():
             coin = CoinHistory.objects.create(**data)
-            serializer = CoinHistorySerializer(coin)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        serializer = CoinHistorySerializer(instance=existing_record, data=data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+            return Response('Record created', status=status.HTTP_201_CREATED)
         else:
-            return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
+            existing_record.update(**data)
+            return Response('Record updated', status=status.HTTP_204_NO_CONTENT)
+
+        # serializer = CoinHistorySerializer(instance=existing_record, data=data)
+        # if serializer.is_valid():
+        #     serializer.update()
+        #     return Response(serializer.data, status=status.HTTP_204_NO_CONTENT)
+        # else:
+        #     return Response('Something went wrong with your request.', status=status.HTTP_404_NOT_FOUND)
 
     # Deletes record.
     def delete(self, request, pk):
-        record = CoinHistory.objects.get(symbol=pk, date=request.data['date'])
-        recSerializer = CoinHistorySerializer(record, many=False)
-        if recSerializer.is_valid():
-            record.delete()
-            return Response(recSerializer.data)
-        else:
+        record = CoinHistory.objects.filter(symbol=pk, date=request.data['date'])
+        if not record:
             return Response('Record not found', status=status.HTTP_404_NOT_FOUND)
 
+        record.delete()
+        return Response(request.data)
 
-# TODO: Handle case when start and end dates are equal
-# TODO: Extract validations to date parameters
-# TODO: Extract function to return output in json
 
 # More specialized information about the coin in given date
 
@@ -234,7 +229,6 @@ class GetCoinDetailsView(APIView):
         serializer, error = date_validations(request, pk)
         if serializer is None:
             return Response(error, status=status.HTTP_400_BAD_REQUEST)
-
         buy, sell = maxProfit(serializer.data)
         analyzed_data = {
             'coin': pk,
@@ -266,3 +260,21 @@ class GetAllRecordsByDateView(APIView):
             )
         records_serializer = CoinHistorySerializer(records, many=True)
         return Response(records_serializer.data)
+
+
+class GetCoinDateRangeView(APIView):
+    def get(self, request, pk):
+        max_date_record = CoinHistory.objects.filter(symbol=pk).aggregate(Max('date'))
+        min_date_record = CoinHistory.objects.filter(symbol=pk).aggregate(Min('date'))
+
+        max_obj = CoinHistory.objects.get(symbol=pk, date=max_date_record['date__max'])
+        min_obj = CoinHistory.objects.get(symbol=pk, date=min_date_record['date__min'])
+
+        max_serializer = CoinHistorySerializer(max_obj, many=False)
+        min_serializer = CoinHistorySerializer(min_obj, many=False)
+        # if not (max_serializer.is_valid() and min_serializer.is_valid()):
+        #     return Response('Something wrong happened with your request', status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            'min_date': min_serializer.data['date'],
+            'max_date': max_serializer.data['date']
+        })

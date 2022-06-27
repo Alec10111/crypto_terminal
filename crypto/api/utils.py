@@ -35,14 +35,15 @@ def date_validations(request, pk):
 
     if 'date' in request_keys:
 
-        registry = CoinHistory.objects.filter(symbol=symbol).get(date=request.data['date'])
+        registry = CoinHistory.objects.filter(symbol=symbol, date=request.data['date'])
 
-        regSerializer = CoinHistorySerializer(registry, many=False)
+        regSerializer = CoinHistorySerializer(registry,many=True)
 
         return regSerializer, ''
 
     elif ('start_date' in request_keys) and ('end_date' in request_keys):
-
+        if request.data['start_date'] == request.data['end_date']:
+            return None, 'Dates cannot be equal'
         registry = CoinHistory.objects.filter(
             symbol=symbol,
             date__range=(request.data['start_date'], request.data['end_date'])

@@ -1,7 +1,6 @@
-def getSymbol(cList, coin):
-    filtered = list(filter(lambda x: x['name'] == coin, cList))
-    dicte = filtered[0]
-    return dicte['symbol']
+def get_symbol(cList, coin):
+    filtered = [record for record in cList if record['name'] == coin]
+    return filtered[0]['symbol']
 
 
 def flatten(xss):

@@ -6,5 +6,6 @@ urlpatterns = [
     path('coin', views.GetCoinView.as_view(), name='coin'),
     path('coin/allrecords', views.GetAllRecordsByDateView.as_view(), name='all-records-by-date'),
     path('coin/<str:pk>', views.GetCoinInfoView.as_view(), name='coin-info'),
-    path('coin/extra/<str:pk>', views.GetCoinDetailsView.as_view(), name='coin-details-info')
+    path('coin/extra/<str:pk>', views.GetCoinDetailsView.as_view(), name='coin-details-info'),
+    path('coin/range/<str:pk>', views.GetCoinDateRangeView.as_view(), name='coin-date-range')
 ]
