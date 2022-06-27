@@ -1,8 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from .test_data import base_data
-from api.models import Coin, CoinHistory
-from api.serializers import CoinHistorySerializer
 
 
 class TestViews(TestCase):

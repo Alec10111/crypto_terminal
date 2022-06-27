@@ -1,4 +1,3 @@
-import csv
 import os
 from api.models import Coin, CoinHistory
 import pandas as pd

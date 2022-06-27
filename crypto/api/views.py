@@ -1,8 +1,6 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import permissions
-from django.http import JsonResponse
-from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .models import Coin, CoinHistory
@@ -32,7 +30,7 @@ class GroupViewSet(viewsets.ModelViewSet):
 
 # Returns a list of available endpoints
 class GetCoinOverview(APIView):
-    def get(self,request):
+    def get(self, request):
         routes = [
             {
                 'Endpoint': 'api/overview',
@@ -139,7 +137,6 @@ class GetCoinOverview(APIView):
                                'present, it returns all available records on that range. '
             },
             {
-
                 'Endpoint': 'coin/record/range/<pk>',
                 'method': 'GET',
                 'body': None,
@@ -246,7 +243,6 @@ class GetCoinDetailsView(APIView):
         return Response(analyzed_data)
 
 
-# Not used
 class GetAllRecordsByDateView(APIView):
     def post(self, request):
 

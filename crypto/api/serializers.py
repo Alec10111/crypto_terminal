@@ -26,9 +26,3 @@ class CoinHistorySerializer(ModelSerializer):
     class Meta:
         model = CoinHistory
         fields = '__all__'
-
-
-class CoinHistoryDateSerializer(ModelSerializer):
-    class Meta:
-        model = CoinHistory
-        fields = ['date']
