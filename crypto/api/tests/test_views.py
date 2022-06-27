@@ -25,7 +25,6 @@ class TestViews(TestCase):
 
     def test_api_overview_GET(self):
         response = self.client.get(self.api_overview)
-
         self.assertEqual(response.status_code, 200)
 
     def test_coin_GET(self):

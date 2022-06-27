@@ -31,7 +31,7 @@ with input_single_coin:
     symbol = get_symbol(coins_dict, selected_coin)
     sel_stat = st.selectbox(
         'Select stat', stats_list, key='sel_stat')
-    max_min_date = requests.get('http://localhost:8000/api/coin/range/{}'.format(symbol)).json()
+    max_min_date = requests.get('http://localhost:8000/api/coin/record/range/{}'.format(symbol)).json()
     min_date = datetime.strptime(max_min_date['min_date'], '%Y-%m-%d')
     max_date = datetime.strptime(max_min_date['max_date'], '%Y-%m-%d')
 
@@ -42,24 +42,27 @@ with input_single_coin:
 with specific_date_metrics:
     select_single_date = st.date_input('Date specific data', min_date, min_date, max_date)
     req_single_date = requests.post(
-        'http://localhost:8000/api/coin/{0}'.format(symbol), data={
+        'http://localhost:8000/api/coin/record/{0}'.format(symbol), data={
             'date': select_single_date
         }).json()
-    formatted_single_date_data = {
-        k.capitalize(): round(v, 4) for k, v in req_single_date[0].items() if k.capitalize() in stats_list
-    }
-    st.json(formatted_single_date_data)
+    if not req_single_date:
+        st.write('Record not available for this date.')
+    else:
+        formatted_single_date_data = {
+            k.capitalize(): round(v, 4) for k, v in req_single_date[0].items() if k.capitalize() in stats_list
+        }
+        st.json(formatted_single_date_data)
 
 with single_graphics:
     st.subheader('Stats over time ( {} )'.format(symbol))
 
     req_range_date = requests.post(
-        'http://localhost:8000/api/coin/{0}'.format(symbol), data={
+        'http://localhost:8000/api/coin/record/{0}'.format(symbol), data={
             'start_date': start_end_time[0].date(),
             'end_date': start_end_time[1].date()
         })
     req_extra = requests.post(
-        'http://localhost:8000/api/coin/extra/{0}'.format(symbol), data={
+        'http://localhost:8000/api/coin/record/extra/{0}'.format(symbol), data={
             "start_date": start_end_time[0].date(),
             "end_date": start_end_time[1].date()
         })
@@ -93,7 +96,7 @@ with input_compare_coins:
         'Select stat', stats_list, key='sel_stat_mul')
 
     symbols = [get_symbol(coins_dict, coin) for coin in selected_coins]
-    max_min_date_mul = [requests.get('http://localhost:8000/api/coin/range/{}'.format(sym)).json() for sym in symbols]
+    max_min_date_mul = [requests.get('http://localhost:8000/api/coin/record/range/{}'.format(sym)).json() for sym in symbols]
     min_mul = max([rec['min_date'] for rec in max_min_date_mul])
     max_mul = min([rec['max_date'] for rec in max_min_date_mul])
     min_mul = datetime.strptime(min_mul, '%Y-%m-%d')
@@ -108,7 +111,7 @@ with input_compare_coins:
 
 with compare_graphics:
     mul_req_list = [requests.post(
-        'http://localhost:8000/api/coin/{0}'.format(sym), data={
+        'http://localhost:8000/api/coin/record/{0}'.format(sym), data={
             'start_date': start_end_time_mul[0].date(),
             'end_date': start_end_time_mul[1].date()
         }).json() for sym in symbols]

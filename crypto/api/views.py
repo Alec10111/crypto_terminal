@@ -56,7 +56,7 @@ def getRoutes(request):
             'description': 'adds new coin to the database'
         },
         {
-            'Endpoint': 'api/coin',
+            'Endpoint': 'api/coin/<pk>',
             'method': 'PUT',
             'body': {
                 'symbol': 'UBTC',
@@ -74,13 +74,13 @@ def getRoutes(request):
             'description': 'deletes coin from the database'
         },
         {
-            'Endpoint': 'api/coin/<pk>',
+            'Endpoint': 'api/coin/record/<pk>',
             'method': 'GET',
             'body': None,
             'description': 'returns latest information about the coin with symbol=pk'
         },
         {
-            'Endpoint': 'api/coin/<pk>',
+            'Endpoint': 'api/coin/record/<pk>',
             'method': 'POST',
             'body': {
                 'startDate': '2022-03-03',
@@ -89,7 +89,7 @@ def getRoutes(request):
             'description': 'returns records within given dates about the coin with symbol=pk'
         },
         {
-            'Endpoint': 'api/coin/<pk>',
+            'Endpoint': 'api/coin/record/<pk>',
             'method': 'POST',
             'body': {
                 'date': '2022-03-03'
@@ -97,7 +97,7 @@ def getRoutes(request):
             'description': 'returns records for given date about the coin with symbol=pk'
         },
         {
-            'Endpoint': 'api/coin/<pk>',
+            'Endpoint': 'api/coin/record/<pk>',
             'method': 'PUT',
             'body': {
                 "date": "2019-01-10",
@@ -111,7 +111,7 @@ def getRoutes(request):
             'description': 'updates record on the coin with symbol=pk'
         },
         {
-            'Endpoint': 'api/coin/<pk>',
+            'Endpoint': 'api/coin/record/<pk>',
             'method': 'DELETE',
             'body': {
                 "date": "2019-01-10",
@@ -119,7 +119,7 @@ def getRoutes(request):
             'description': 'deletes record on the coin with symbol=pk'
         },
         {
-            'Endpoint': 'api/coin/extra/<pk>',
+            'Endpoint': 'api/coin/record/extra/<pk>',
             'method': 'POST',
             'body': {
                 "startDate": "2018-11-11",
@@ -128,7 +128,7 @@ def getRoutes(request):
             'description': 'returns best buy-sell dates and profit percentage on the coin with symbol=pk'
         },
         {
-            'Endpoint': 'api/coin/allrecords',
+            'Endpoint': 'api/coin/record/allrecords',
             'method': 'POST',
             'body': {
                 'coins': ['ADA', 'BTC'],
