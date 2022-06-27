@@ -30,117 +30,124 @@ class GroupViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-@api_view(['GET'])
 # Returns a list of available endpoints
-def getRoutes(request):
-    routes = [
-        {
-            'Endpoint': 'api/overview',
-            'method': 'GET',
-            'body': None,
-            'description': 'returns an array with all available endpoints'
-        },
-        {
-            'Endpoint': 'api/coin',
-            'method': 'GET',
-            'body': None,
-            'description': 'returns an array with all available coins'
-        },
-        {
-            'Endpoint': 'api/coin',
-            'method': 'POST',
-            'body': {
-                'symbol': 'NC',
-                'name': 'Newcoin'
+class GetCoinOverview(APIView):
+    def get(self,request):
+        routes = [
+            {
+                'Endpoint': 'api/overview',
+                'method': 'GET',
+                'body': None,
+                'description': 'returns an array with all available endpoints'
             },
-            'description': 'adds new coin to the database'
-        },
-        {
-            'Endpoint': 'api/coin/<pk>',
-            'method': 'PUT',
-            'body': {
-                'symbol': 'UBTC',
-                'name': 'UpdatedBitcoin'
+            {
+                'Endpoint': 'api/coin',
+                'method': 'GET',
+                'body': None,
+                'description': 'returns an array with all available coins'
             },
-            'description': 'updates a coin name and symbol in the database'
-        },
-        {
-            'Endpoint': 'api/coin',
-            'method': 'DELETE',
-            'body': {
-                'symbol': 'NC',
-                'name': 'Newcoin'
+            {
+                'Endpoint': 'api/coin',
+                'method': 'POST',
+                'body': {
+                    'symbol': 'NC',
+                    'name': 'Newcoin'
+                },
+                'description': 'adds new coin to the database'
             },
-            'description': 'deletes coin from the database'
-        },
-        {
-            'Endpoint': 'api/coin/record/<pk>',
-            'method': 'GET',
-            'body': None,
-            'description': 'returns latest information about the coin with symbol=pk'
-        },
-        {
-            'Endpoint': 'api/coin/record/<pk>',
-            'method': 'POST',
-            'body': {
-                'startDate': '2022-03-03',
-                'endDate': '2022-04-03'
+            {
+                'Endpoint': 'api/coin/<pk>',
+                'method': 'PUT',
+                'body': {
+                    'symbol': 'UBTC',
+                    'name': 'UpdatedBitcoin'
+                },
+                'description': 'updates a coin name and symbol in the database'
             },
-            'description': 'returns records within given dates about the coin with symbol=pk'
-        },
-        {
-            'Endpoint': 'api/coin/record/<pk>',
-            'method': 'POST',
-            'body': {
-                'date': '2022-03-03'
+            {
+                'Endpoint': 'api/coin',
+                'method': 'DELETE',
+                'body': {
+                    'symbol': 'NC',
+                    'name': 'Newcoin'
+                },
+                'description': 'deletes coin from the database'
             },
-            'description': 'returns records for given date about the coin with symbol=pk'
-        },
-        {
-            'Endpoint': 'api/coin/record/<pk>',
-            'method': 'PUT',
-            'body': {
-                "date": "2019-01-10",
-                "high": 2.9847077975,
-                "low": 2.3791120974,
-                "open": 2.91424758223,
-                "close": 2.4361243181,
-                "volume": 1205353503.11214,
-                "marketcap": 2207725769.14475
+            {
+                'Endpoint': 'api/coin/record/<pk>',
+                'method': 'GET',
+                'body': None,
+                'description': 'returns latest information about the coin with symbol=pk'
             },
-            'description': 'updates record on the coin with symbol=pk'
-        },
-        {
-            'Endpoint': 'api/coin/record/<pk>',
-            'method': 'DELETE',
-            'body': {
-                "date": "2019-01-10",
+            {
+                'Endpoint': 'api/coin/record/<pk>',
+                'method': 'POST',
+                'body': {
+                    'startDate': '2022-03-03',
+                    'endDate': '2022-04-03'
+                },
+                'description': 'returns records within given dates about the coin with symbol=pk'
             },
-            'description': 'deletes record on the coin with symbol=pk'
-        },
-        {
-            'Endpoint': 'api/coin/record/extra/<pk>',
-            'method': 'POST',
-            'body': {
-                "startDate": "2018-11-11",
-                "endDate": "2018-11-23"
+            {
+                'Endpoint': 'api/coin/record/<pk>',
+                'method': 'POST',
+                'body': {
+                    'date': '2022-03-03'
+                },
+                'description': 'returns records for given date about the coin with symbol=pk'
             },
-            'description': 'returns best buy-sell dates and profit percentage on the coin with symbol=pk'
-        },
-        {
-            'Endpoint': 'api/coin/record/allrecords',
-            'method': 'POST',
-            'body': {
-                'coins': ['ADA', 'BTC'],
-                'startDate': '2022-03-03',
-                'endDate': '2022-04-03'
+            {
+                'Endpoint': 'api/coin/record/<pk>',
+                'method': 'PUT',
+                'body': {
+                    "date": "2019-01-10",
+                    "high": 2.9847077975,
+                    "low": 2.3791120974,
+                    "open": 2.91424758223,
+                    "close": 2.4361243181,
+                    "volume": 1205353503.11214,
+                    "marketcap": 2207725769.14475
+                },
+                'description': 'updates record on the coin with symbol=pk'
             },
-            'description': 'returns records on given date range for provided coins. If coins parameter is not '
-                           'present, it returns all available records on that range. '
-        }
+            {
+                'Endpoint': 'api/coin/record/<pk>',
+                'method': 'DELETE',
+                'body': {
+                    "date": "2019-01-10",
+                },
+                'description': 'deletes record on the coin with symbol=pk'
+            },
+            {
+                'Endpoint': 'api/coin/record/extra/<pk>',
+                'method': 'POST',
+                'body': {
+                    "startDate": "2018-11-11",
+                    "endDate": "2018-11-23"
+                },
+                'description': 'returns best buy-sell dates and profit percentage on the coin with symbol=pk'
+            },
+            {
+                'Endpoint': 'api/coin/record/allrecords',
+                'method': 'POST',
+                'body': {
+                    'coins': ['ADA', 'BTC'],
+                    'startDate': '2022-03-03',
+                    'endDate': '2022-04-03'
+                },
+                'description': 'returns records on given date range for provided coins. If coins parameter is not '
+                               'present, it returns all available records on that range. '
+            },
+            {
 
-    ]
-    return JsonResponse(routes, safe=False)
+                'Endpoint': 'coin/record/range/<pk>',
+                'method': 'GET',
+                'body': None,
+                'description': 'Returns maximum and minimum date available for the given coin.'
+            }
+
+        ]
+        return Response(routes)
 
 
 class GetCoinView(APIView):

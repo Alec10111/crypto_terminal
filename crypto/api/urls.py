@@ -2,7 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('overview', views.getRoutes, name='api-overview'),
+    path('overview', views.GetCoinOverview.as_view(), name='api-overview'),
     path('coin', views.GetCoinView.as_view(), name='coin'),
     path('coin/<str:pk>', views.PutCoinView.as_view(), name='coin-update'),
     path('coin/record/allrecords', views.GetAllRecordsByDateView.as_view(), name='all-records-by-date'),
