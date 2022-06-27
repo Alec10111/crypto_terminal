@@ -1,12 +1,12 @@
 # Crypto Terminal
 Interactive tool to display useful data about cryptocurrencies.
 
-Backed done with Django (Django-rest-framework) and PostgreSQL as database.
+Backend done with Django (Django-rest-framework) and PostgreSQL as database.
 
 The dashboard on the frontend is done with Streamlit.
 
 ## Pre-requisites
-You need to have python, postgresql and a postgresql client installed in your machine.
+You need to have python, postgresql and a postgresql client installed on your machine. Mine is Python 3.9.9 and Postgresql 14.3 
 
 ## Setup
 First you have to either clone the gitbub repo
