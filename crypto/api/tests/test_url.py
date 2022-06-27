@@ -6,7 +6,7 @@ from api.views import *
 class TestUrls(SimpleTestCase):
     def test_api_overview(self):
         url = reverse('api-overview')
-        self.assertEqual(resolve(url).func, getRoutes)
+        self.assertEqual(resolve(url).func.view_class, GetCoinOverview)
 
     def test_coin(self):
         url = reverse('coin')
