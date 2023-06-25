@@ -81,7 +81,7 @@ Send2Trash==1.8.0
 six==1.16.0
 smmap==5.0.0
 soupsieve==2.3.2.post1
-sqlparse==0.4.2
+sqlparse==0.4.4
 stack-data==0.3.0
 streamlit==1.10.0
 terminado==0.15.0
